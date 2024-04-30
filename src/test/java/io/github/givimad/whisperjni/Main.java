@@ -1,6 +1,8 @@
 package io.github.givimad.whisperjni;
 
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -20,7 +22,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * @date: 2024/4/20 16:53
  * @Description:
  */
+
 public class Main {
+
     private static final String modelFilePahth = "d:\\data\\models\\ggml-tiny.bin";
     // 中文是zh，英文是en
     private static final String language = "en";
@@ -49,6 +53,7 @@ public class Main {
             e.printStackTrace();
         }
     }
+
     public static void main(String[] args) throws Exception {
         ChangeTo16bitWave.change(sourceFile, tmpFile);
         System.out.println(System.getProperty("user.dir"));
