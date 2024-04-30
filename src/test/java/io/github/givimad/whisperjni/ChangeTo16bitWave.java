@@ -11,7 +11,10 @@ import java.util.Scanner;
  */
 
 public class ChangeTo16bitWave {
-
+    /**
+     *
+     * 将音频文件，转化成16采样的音频文件
+     * */
     public static void change(String sourceFile, String endFile) throws IOException {
         File inputFile = new File(sourceFile);
         File outFile = new File(endFile);

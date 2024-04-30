@@ -54,7 +54,12 @@ public class Main {
         }
     }
 
+
+
     public static void main(String[] args) throws Exception {
+        translate();
+    }
+    public static void translate() throws Exception {
         ChangeTo16bitWave.change(sourceFile, tmpFile);
         System.out.println(System.getProperty("user.dir"));
         var modelFile = testModelPath.toFile();
