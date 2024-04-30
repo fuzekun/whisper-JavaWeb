@@ -1,6 +1,7 @@
 package com.fuzekun.entity.absClass;
 
 import com.fuzekun.utils.TranslateUtils;
+import com.sun.jdi.ClassNotLoadedException;
 import io.github.givimad.whisperjni.WhisperContext;
 import io.github.givimad.whisperjni.WhisperFullParams;
 import io.github.givimad.whisperjni.WhisperJNI;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
+import java.util.concurrent.*;
 
 /**
  * @author: fuzekun
@@ -25,20 +27,36 @@ import java.nio.file.Path;
  * 1. 抛出错误，日志不用记录，直到根节点在进行日志的记录
  * 2. 一般来说，只有在服务文件中会进行日志的记录
  */
+@Slf4j
 public class AudioFileResolver {
     private static final String modelFilePahth = "d:\\data\\models\\ggml-tiny.bin";
     // 中文是zh，英文是en
     private static final String language = "en";
+    // 首先加载类的时候就创建文件，缓存下来，模型文件还是挺大
     private static Path testModelPath = Path.of(modelFilePahth);
+    private static File modelFile = testModelPath.toFile();
+    private volatile static ThreadPoolExecutor poolExecutor;
+    private void initThreadPool() {
+        if (poolExecutor == null) {
+            synchronized (this) {
+                if (poolExecutor == null) {
+                    poolExecutor = new ThreadPoolExecutor(10, 10, 250, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(10));
+                }
+            }
+        }
+    }
     /**
      * 需要临时生成一个文件，所以需要给定临时文件的名称
      * 使用UUID不用考虑临时文件的重复问题
      *
      * @return 是否翻译成功，成功保存到ans文件，失败删除tmp和ansFile；
+     *
+     * 1. 提升性能的手段: 缓存了模型，采用了双锁检测；使用多线程进行写入，从而提升响应速度
+     *
+     *
      * */
-    public void translate(String sourceFile, String tmpFile, String ansFile) throws IOException, UnsupportedAudioFileException, InterruptedException {
+    public Future<File> translate(String sourceFile, String tmpFile, String ansFile) throws IOException, UnsupportedAudioFileException, InterruptedException, ExecutionException {
         // 0. 检验有效性
-        File modelFile = testModelPath.toFile();
         if(!modelFile.exists() || !modelFile.isFile()) {
             throw new RuntimeException("Missing model file: " + testModelPath.toAbsolutePath());
         }
@@ -47,19 +65,15 @@ public class AudioFileResolver {
         }
 
         // 1. 转换成64位的文件，然后在进行重新采样
-        if (TranslateUtils.change16Bit(sourceFile, tmpFile) != 0) {
-            throw new RuntimeException("转换异常，无法处理");
-        }
-        Path samplePath = Path.of(tmpFile);
-        float[] samples = readJFKFileSamples(samplePath);
+        Future<float[]>task = changeAsyn(sourceFile, tmpFile);
+        float[] samples = task.get();
 
-        // 2. 通过JNI调用C++库文件,从而实现调用本地的C++接口，创建Whisper独享
-        var loadOptions = new WhisperJNI.LoadOptions();
+        // 2. 通过JNI调用C++库文件,从而实现调用本地的C++接口，使用了单例模式加载文件，所以不用担心性能问题了
+        WhisperJNI.LoadOptions loadOptions = new WhisperJNI.LoadOptions();
         loadOptions.logger = System.out::println;
         WhisperJNI.loadLibrary(loadOptions);
         WhisperJNI whisper = new WhisperJNI();
         WhisperJNI.setLibraryLogger(loadOptions.logger);
-
 
         // 3. 进行翻译
         var ctx = whisper.init(testModelPath);
@@ -69,33 +83,54 @@ public class AudioFileResolver {
         if(result != 0) {
             throw new RuntimeException("Transcription failed with code " + result);
         }
-        // 4. 写入结果
-        writeTranslateAnsToFile(whisper, ctx, ansFile);
+        // 4. 异步写入结果
+        Future<File>ans = writeTranslateAnsToFileAsyn(whisper, ctx, ansFile);
+        return ans;
+    }
+    private Future<float[]>changeAsyn(String sourceFilePath, String tmpFilePath)  {
+        initThreadPool();
+        return poolExecutor.submit(()->{
+            if (TranslateUtils.change16Bit(sourceFilePath, tmpFilePath) != 0) {
+                throw new RuntimeException("转换异常，无法处理");
+            }
+            Path samplePath = Path.of(tmpFilePath);
+            if (!samplePath.toFile().exists())
+                throw new RuntimeException("服务器处理异常!");
+            float[] samples = readJFKFileSamples(samplePath);
+            return samples;
+        });
     }
 
-    private void writeTranslateAnsToFile(WhisperJNI whisper, WhisperContext ctx, String file) throws IOException{
-        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-        int numSegments = whisper.fullNSegments(ctx);
-        for (int i = 0; i < numSegments; i++) {
-            long startTime = whisper.fullGetSegmentTimestamp0(ctx,i);
-            long endTime = whisper.fullGetSegmentTimestamp1(ctx,i);
-            String timeStrap = getTime(startTime) + "-" + getTime(endTime);
-            System.out.print(timeStrap + " ");
-            String text = whisper.fullGetSegmentText(ctx, i);
-            System.out.println(text);
-            writer.write(timeStrap + " ");
-            writer.write(text + "\n");
-        }
-        writer.write("\n全部内容如下：\n");
-        writer.write("---------------------------------------------------------\n");
-        // 全写
-        for (int i = 0; i < numSegments; i++) {
-            String text = whisper.fullGetSegmentText(ctx, i);
-            writer.write(text + "\n");
-        }
-        writer.write("-------------------------------------------------------------");
-        writer.flush();
-        writer.close();
+    private Future<File> writeTranslateAnsToFileAsyn(WhisperJNI whisper, WhisperContext ctx, String filePath) throws IOException{
+        // 1. 初始化线程池
+        initThreadPool();
+        // 2. 使用线程池将结果异步写入文件
+        return poolExecutor.submit(() -> {
+            File file = new File(filePath);
+            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+            int numSegments = whisper.fullNSegments(ctx);
+            for (int i = 0; i < numSegments; i++) {
+                long startTime = whisper.fullGetSegmentTimestamp0(ctx, i);
+                long endTime = whisper.fullGetSegmentTimestamp1(ctx, i);
+                String timeStrap = getTime(startTime) + "-" + getTime(endTime);
+                System.out.print(timeStrap + " ");
+                String text = whisper.fullGetSegmentText(ctx, i);
+                System.out.println(text);
+                writer.write(timeStrap + " ");
+                writer.write(text + "\n");
+            }
+            writer.write("\n全部内容如下：\n");
+            writer.write("---------------------------------------------------------\n");
+            // 全写
+            for (int i = 0; i < numSegments; i++) {
+                String text = whisper.fullGetSegmentText(ctx, i);
+                writer.write(text + "\n");
+            }
+            writer.write("-------------------------------------------------------------");
+            writer.flush();
+            writer.close();
+            return file;
+        });
     }
 
     private String getTime(long startTime) {
