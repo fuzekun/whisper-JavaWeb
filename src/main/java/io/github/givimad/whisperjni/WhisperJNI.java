@@ -13,7 +13,8 @@ import java.nio.file.Path;
  * @author Miguel Álvarez Díez - Initial contribution
  */
 public class WhisperJNI {
-    private static boolean libraryLoaded;
+    // 单例模式进行加载，但是如果碰到了多线程，可能会出现加载多次的情况，采用v + s的方式
+    private volatile static boolean libraryLoaded;
     private static LibraryLogger libraryLogger;
 
     //region native api
@@ -372,17 +373,25 @@ public class WhisperJNI {
      * @throws IOException when unable to load the native library.
      */
     public static void loadLibrary(LoadOptions options) throws IOException {
+        // 防止性能问题，采用缓存方式，单例方式
         if (libraryLoaded) {
             return;
         }
-        if (options == null) {
-            options = new LoadOptions();
+        // 锁上这个代码块
+        synchronized (WhisperJNI.class) {
+            // 双锁检测
+            if (libraryLoaded)
+                return ;
+            if (options == null) {
+                options = new LoadOptions();
+            }
+            if (options.logger == null) {
+                options.logger = (String ignored) -> {
+                };
+            }
+            LibraryUtils.loadLibrary(options);
+            libraryLoaded = true;
         }
-        if(options.logger == null) {
-            options.logger = (String ignored) -> { };
-        }
-        LibraryUtils.loadLibrary(options);
-        libraryLoaded = true;
     }
 
     /**
