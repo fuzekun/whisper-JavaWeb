@@ -7,10 +7,12 @@ import io.github.givimad.whisperjni.WhisperFullParams;
 import io.github.givimad.whisperjni.WhisperJNI;
 import io.github.givimad.whisperjni.WhisperSamplingStrategy;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
+import javax.validation.Valid;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -29,6 +31,7 @@ import java.util.concurrent.*;
  */
 @Slf4j
 public class AudioFileResolver {
+
     private static final String modelFilePahth = "d:\\data\\models\\ggml-tiny.bin";
     // 中文是zh，英文是en
     private static final String language = "en";
@@ -83,12 +86,15 @@ public class AudioFileResolver {
         if(result != 0) {
             throw new RuntimeException("Transcription failed with code " + result);
         }
-        // 4. 异步写入结果
+        // 4. 异步写入结果，如果服务端支持推送功能，可以提升效率，否则还是串行执行
         Future<File>ans = writeTranslateAnsToFileAsyn(whisper, ctx, ansFile);
         return ans;
     }
+    /**异步文件处理*/
     private Future<float[]>changeAsyn(String sourceFilePath, String tmpFilePath)  {
+        // 1. 初始化线程池
         initThreadPool();
+        // 2. 进行文件转化任务的执行
         return poolExecutor.submit(()->{
             if (TranslateUtils.change16Bit(sourceFilePath, tmpFilePath) != 0) {
                 throw new RuntimeException("转换异常，无法处理");
@@ -100,7 +106,7 @@ public class AudioFileResolver {
             return samples;
         });
     }
-
+    /**异步写入文件*/
     private Future<File> writeTranslateAnsToFileAsyn(WhisperJNI whisper, WhisperContext ctx, String filePath) throws IOException{
         // 1. 初始化线程池
         initThreadPool();
