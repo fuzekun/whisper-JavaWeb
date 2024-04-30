@@ -1,6 +1,7 @@
 package com.fuzekun.controller;
 
-import com.fuzekun.dto.ResponseResult;
+import com.fuzekun.common.ResponseResult;
+
 import com.fuzekun.service.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

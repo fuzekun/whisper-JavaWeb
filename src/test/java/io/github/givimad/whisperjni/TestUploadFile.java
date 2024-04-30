@@ -1,7 +1,7 @@
 package io.github.givimad.whisperjni;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fuzekun.dto.ResponseResult;
+import com.fuzekun.common.ResponseResult;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -55,7 +55,7 @@ public class TestUploadFile {
                 responseContentBuffer.append(line);
             }
             ResponseResult responseResult = objectMapper.readValue(responseContentBuffer.toString(), ResponseResult.class);
-            if (responseResult.getStatus()) {
+            if (responseResult.getStatusCode() == ResponseResult.ok) {
                 System.out.println("文件上传成功!");
             } else {
                 System.out.println("文件上传失败:" + responseResult.getMessage());

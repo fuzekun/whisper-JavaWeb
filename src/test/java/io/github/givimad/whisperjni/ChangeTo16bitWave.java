@@ -1,5 +1,7 @@
 package io.github.givimad.whisperjni;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.IOException;
 import java.io.*;
 import java.util.Scanner;
@@ -23,7 +25,7 @@ public class ChangeTo16bitWave {
         }
         if (outFile.exists()) {
             Scanner sc = new Scanner(System.in);
-            System.out.print("临时文件" + endFile + "已经存在，已覆盖?[y:n]:");
+            System.out.println("临时文件" + endFile + "已经存在，已覆盖?[y:n]:");
 //            String s = sc.nextLine();
             outFile.delete();
 //            if (s.equals("n")) {

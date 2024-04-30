@@ -1,6 +1,7 @@
 package com.fuzekun.service;
 
-import com.fuzekun.dto.ResponseResult;
+import com.fuzekun.common.ResponseResult;
+import java.io.File;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,6 +16,8 @@ import java.io.IOException;
 public interface FileService {
 
     public ResponseResult upload(MultipartFile file);
+
+    public ResponseResult resolve(String fileName);
 
 //    FileActionResponse uploadFile(byte[] bytes, String fileName);
 //
