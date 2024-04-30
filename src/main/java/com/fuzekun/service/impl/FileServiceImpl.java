@@ -71,7 +71,11 @@ public class FileServiceImpl implements FileService {
             return ResponseResult.error("文件保存失败：{}" + e.getMessage()).build();
         }
         log.info("{}文件保存为:{}", file.getOriginalFilename(), fileName);
-        return ResponseResult.ok("文件保存成功!").build();
+        ResponseResult<String>responseResult = ResponseResult.ok("文件保存成功!").build();
+        Map<String, String>jsonMap = new HashMap<>();
+        jsonMap.put("fileName", fileName);
+        responseResult.setData(jsonMap.toString());
+        return responseResult;
     }
 
     @Override

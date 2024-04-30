@@ -26,10 +26,11 @@ public class PostUtils {
     public static void validResponse(String response) throws IOException {
         ResponseResult responseResult =  objectMapper.readValue(response.toString(), ResponseResult.class);
         if (responseResult.getStatusCode() == ResponseResult.ok) {
-            System.out.println("结果执行成功: " + responseResult.getMessage());
+            System.out.println("post请求执行成功: " + responseResult.getMessage());
+            System.out.println("返回结果为:" + responseResult.getData());
         }
         else {
-            System.out.println("文件上传失败: " + responseResult.getMessage());
+            System.out.println("post请求执行失败: " + responseResult.getMessage());
         }
     }
 
