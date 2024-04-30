@@ -1,35 +1,40 @@
 package com.fuzekun.service;
 
 import com.fuzekun.common.ResponseResult;
-import java.io.File;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import java.io.*;
 
 /**
- * @author: fuzekun
- * @date: 2024/4/29
- * @describe:
+ * @author: Zekun Fu
+ * @date: 2024/4/29 22:38
+ * @Description:
  */
-public interface FileService {
+@Slf4j
+@Service
+public class FileService {
 
-    public ResponseResult upload(MultipartFile file);
+    public ResponseResult upload(MultipartFile file) {
+        if (file == null) {
+            log.debug("文件为空!");
+            return ResponseResult.error("文件为空，请检查文件是否存在!").build();
+        }
+        try {
+            log.debug("读取文件!");
+            InputStream fin = file.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(fin));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+            }
+        } catch (IOException e) {
+            log.error("文件读取失败" + e.getMessage());
+            return ResponseResult.error("文件读取失败，请重新上传文件！").build();
+        }
+        log.debug("文件上传成功!");
+        return ResponseResult.ok("文件上传成功!").build();
 
-    public ResponseResult resolve(String fileName);
-
-//    FileActionResponse uploadFile(byte[] bytes, String fileName);
-//
-//    FileActionResponse uploadFile(byte[] bytes);
-//
-//    FileActionResponse downloadFile(long fileId);
-//
-//    FileActionResponse deleteFile(long fileId);
-//
-//    void checkMd5(String chunk, String chunkSize, String guid, HttpServletResponse response);
-//
-//    void upload(MultipartFile file, Integer chunk, String guid) throws IOException;
-//
-//    FileActionResponse combineBlock(String guid, String fileName);
+    }
 }

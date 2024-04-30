@@ -7,6 +7,9 @@
 2. 提供翻译接口
 3. 增加文字转语音的功能
 
+# 开发日志
+[开发日志1](https://github.com/fuzekun/whisper-JavaWeb/tree/master/src/doc)
+
 # WhisperJNI
 
 A JNI wrapper for [whisper.cpp](https://github.com/ggerganov/whisper.cpp), allows transcribe speech to text in Java.
