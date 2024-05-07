@@ -23,6 +23,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author: Zekun Fu
@@ -31,76 +32,18 @@ import org.apache.http.util.EntityUtils;
  */
 public class FileUploadTest {
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    private static String filePath = "d:/data/password.txt";
-    private static String uploadUrl = "http://localhost:8080/file/upload";
+    private static String filePath = "d:\\data\\password.txt";
+    private static String uploadUrl = "http://localhost:8081/file/upload";
 
-    public static void main(String[] args) {
 
-        try {
-            File file = new File(filePath);
-            sendMultipartPostRequest(uploadUrl, file);
-//            sendBase64File();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    private static void sendBase64File() throws IOException {
-        File file = new File(filePath);
-        byte[] fileContent = Files.readAllBytes(file.toPath());
-        String base64FileContent = Base64.getEncoder().encodeToString(fileContent);
 
-        Map<String, String> postData = new HashMap<>();
-        postData.put("file", base64FileContent);
-
-        sendPostRequest(uploadUrl, postData);
+    @Test
+    public void sendMultipartPostRequest() throws IOException {
+        assert PostUtils.validResponse(PostUtils.sendMultipartPostRequest(uploadUrl, filePath));
     }
 
-    private static void sendMultipartPostRequest(String url, File file) throws IOException {
-        HttpClient httpClient = HttpClients.createDefault();
-        HttpPost httpPost = new HttpPost(url);
-
-        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-        builder.addBinaryBody("file", file, ContentType.DEFAULT_BINARY, file.getName());
-
-        HttpEntity multipart = builder.build();
-        httpPost.setEntity(multipart);
-
-        HttpResponse response = httpClient.execute(httpPost);
-        String responseBody = EntityUtils.toString(response.getEntity());
-        validResponse(responseBody);
-    }
-
-    private static void sendPostRequest(String url, Map<String, String> postData) throws IOException {
-        URL postUrl = new URL(url);
-        HttpURLConnection connection = (HttpURLConnection) postUrl.openConnection();
-        connection.setRequestMethod("POST");
-        connection.setDoOutput(true);
-
-        StringBuilder requestBody = new StringBuilder();
-        for (Map.Entry<String, String> entry : postData.entrySet()) {
-            String key = entry.getKey();
-            String value = entry.getValue();
-            requestBody.append(key).append("=").append(value).append("&");
-        }
-
-        connection.getOutputStream().write(requestBody.toString().getBytes());
-        StringBuilder response = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                response.append(line);
-            }
-        }
-        validResponse(response.toString());
-        connection.disconnect();
-    }
-    private static void validResponse(String response) throws IOException {
-        ResponseResult responseResult =  objectMapper.readValue(response.toString(), ResponseResult.class);
-        if (responseResult.getStatusCode() == ResponseResult.ok) {
-            System.out.println("文件上传成功!");
-        }
-        else {
-            System.out.println("文件上传失败: " + responseResult.getMessage());
-        }
+    @Test
+    public void sendBase64FileTest() throws IOException {
+        assert PostUtils.validResponse(PostUtils.sendBase64File(uploadUrl, filePath));
     }
 }
