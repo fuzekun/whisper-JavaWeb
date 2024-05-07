@@ -38,7 +38,7 @@ import java.util.concurrent.*;
 @Component
 public class AudioFileResolver extends FileResolver<File> {
     @Value("audio.save.path")
-    private static final String SAVE_PATH = "d:\\data\\audio";
+    private static final String SAVE_PATH = "d:\\data\\speak\\audio";
     @Value("${translate.model.path}")
     private static final String MODEL_FILE_PATH = "d:\\data\\models\\ggml-tiny.bin";
     @Value("${translate.language}")
@@ -57,19 +57,9 @@ public class AudioFileResolver extends FileResolver<File> {
     // 交给spring，不用static自己写了，更加优雅。
     @PostConstruct
     public void init() {
-        File path = new File(SAVE_PATH);
-        File ansPath = new File(ANS_FILE_PATH);
-        File tmpPath = new File(TMP_FIME_PATH);
-        if (!path.exists() || path.isFile()) {
-            path.mkdir();
+        if (!FileUtils.mkDir(SAVE_PATH) || !FileUtils.mkDir(ANS_FILE_PATH) || !FileUtils.mkDir(TMP_FIME_PATH)) {
+            log.error("Audio路径无法创建，请检查系统（win）是否正确!");
         }
-        if (!ansPath.exists() || ansPath.isFile()) {
-            ansPath.mkdir();
-        }
-        if (!tmpPath.exists() || tmpPath.isFile()) {
-            tmpPath.mkdir();
-        }
-
     }
 
     // 首先加载类的时候就创建文件，缓存下来，模型文件还是挺大，这个缓存在Whisper类中已经有了
