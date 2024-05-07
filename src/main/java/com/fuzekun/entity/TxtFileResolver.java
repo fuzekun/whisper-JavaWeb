@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.PostConstruct;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,11 +26,12 @@ import java.util.concurrent.Future;
 public class TxtFileResolver<T> extends FileResolver<T> {
 
     @Value("${txt.save.path}")
-    private static final String SAVE_PATH = "d:\\datat\\txt";
-    static {
+    private static final String SAVE_PATH = "d:\\data\\txt";
+    @PostConstruct
+    public void init() {
         File path = new File(SAVE_PATH);
         if (!path.exists()) {
-            path.mkdir();
+            log.info("txt保存文件夹创建成功：{}", path.mkdir());
         }
     }
     @Override
