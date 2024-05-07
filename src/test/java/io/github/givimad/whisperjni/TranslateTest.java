@@ -38,14 +38,14 @@ public class TranslateTest {
     }
 
     @Test
-    public void testTranslate() {
+    public void testTranslate() throws IOException{
         String uri = "http://localhost:8081/translate";
         Map<String, String>mp = new HashMap<>();
-        String[]keys = {"sourceFile"};
+        String[] keys = {"sourceFile"};
         String[] vals = {"d:\\data\\audio\\18.wav"};
         for (int i = 0; i < keys.length; i++) {
             mp.put(keys[i], vals[i]);
         }
-        PostUtils.sendPostWithParam(uri, mp);
+        assert PostUtils.validResponse(PostUtils.sendPostWithParam(uri, mp));
     }
 }

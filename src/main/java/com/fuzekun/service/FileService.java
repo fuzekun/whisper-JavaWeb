@@ -12,29 +12,8 @@ import java.io.*;
  * @date: 2024/4/29 22:38
  * @Description:
  */
-@Slf4j
-@Service
-public class FileService {
+public interface FileService {
+    ResponseResult upload(MultipartFile file);
+    ResponseResult resolve(String fileName);
 
-    public ResponseResult upload(MultipartFile file) {
-        if (file == null) {
-            log.debug("文件为空!");
-            return ResponseResult.error("文件为空，请检查文件是否存在!").build();
-        }
-        try {
-            log.debug("读取文件!");
-            InputStream fin = file.getInputStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(fin));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                System.out.println(line);
-            }
-        } catch (IOException e) {
-            log.error("文件读取失败" + e.getMessage());
-            return ResponseResult.error("文件读取失败，请重新上传文件！").build();
-        }
-        log.debug("文件上传成功!");
-        return ResponseResult.ok("文件上传成功!").build();
-
-    }
 }

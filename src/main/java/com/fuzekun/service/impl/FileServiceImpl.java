@@ -13,9 +13,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -103,4 +101,5 @@ public class FileServiceImpl implements FileService {
         log.info("{}语音文件翻译成功!", file.getName());
         return ResponseResult.ok("语音文件翻译成功").build();
     }
+
 }
