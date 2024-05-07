@@ -90,16 +90,19 @@ public class FileServiceImpl implements FileService {
             return ResponseResult.error("请先上传文件!").build();
         }
         // 1. 根据具体文件类型，判断使用什么文件进行解析，使用工厂模式，将类型，映射到具体的解析类型
-        FileResolver resolver = resolverMap.get(type);
+        FileResolver<File> resolver = resolverMap.get(type);
         log.info("正在解析{}类型的文件，对应的解析器为:{}", type, resolver.getClass().getName());
         // 2. 进行实际上的解析
         try {
-            resolver.resolve(file);
+            File ansFile = resolver.resolve(file);
+            // 3. 返回文件所在路径
+            ResponseResult<File> responseResult = ResponseResult.okFile("语音文件翻译成功,对应文件为：" + ansFile.getName(), ansFile).build();
+            log.info("{}语音文件翻译成功!对应结果为:{}", file.getName(), ansFile.getName());
+            return responseResult;
         } catch (IOException e) {
             log.error("文件转换失败:{}", e.getMessage());
+            return ResponseResult.error("语音文件翻译失败").build();
         }
-        log.info("{}语音文件翻译成功!", file.getName());
-        return ResponseResult.ok("语音文件翻译成功").build();
     }
 
 }

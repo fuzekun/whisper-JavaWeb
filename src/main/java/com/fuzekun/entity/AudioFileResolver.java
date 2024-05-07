@@ -97,7 +97,9 @@ public class AudioFileResolver extends FileResolver<File> {
             throw new RuntimeException("解析异常" + e.getMessage());
         }
     }
-
+    /**
+     * 异步文件解析：模型下载和文件预处理同步进行
+     * */
     @Override
     public Future<File> resolveAsyn(File f) throws IOException, InterruptedException, ExecutionException {
         String tmpFile = TMP_FIME_PATH + "\\" + (int)(Math.random() * 100) + SUFFIX;

@@ -1,6 +1,7 @@
 package com.fuzekun.common;
 
 import lombok.Data;
+import java.io.File;
 
 /**
  * @author: Zekun Fu
@@ -70,5 +71,9 @@ public class ResponseResult<T> {
 
     public static Builder<String> error(String message) {
         return new Builder<String>().statusCode(400).message(message);
+    }
+
+    public static Builder<File> okFile(String message, File file) {
+        return new Builder<File>().statusCode(200).message(message).data(file);
     }
 }
