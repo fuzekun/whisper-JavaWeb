@@ -42,7 +42,7 @@ public class TranslateTest {
         String uri = "http://localhost:8081/translate";
         Map<String, String>mp = new HashMap<>();
         String[] keys = {"sourceFile"};
-        String[] vals = {"d:\\data\\speak\\audio\\98.wav"};
+        String[] vals = {"d:\\data\\speak\\audio\\1.wav"};
         for (int i = 0; i < keys.length; i++) {
             mp.put(keys[i], vals[i]);
         }

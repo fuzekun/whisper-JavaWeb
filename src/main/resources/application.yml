@@ -32,3 +32,7 @@ audio:
   save:
     path: d:\data\speak\audio
     suffix: .wav
+
+# 文件分隔符
+File:
+  split: \
