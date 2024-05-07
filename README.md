@@ -8,7 +8,7 @@
 3. 增加文字转语音的功能
 
 # 开发日志
-[开发日志1](https://github.com/fuzekun/whisper-JavaWeb/tree/master/src/doc)
+[开发日志1](https://gitee.com/tobewin3/whisper-java-web/tree/gitee/src/doc)
 
 # WhisperJNI
 
