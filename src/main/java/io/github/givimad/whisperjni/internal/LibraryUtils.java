@@ -3,15 +3,11 @@ package io.github.givimad.whisperjni.internal;
 import io.github.givimad.whisperjni.WhisperJNI;
 
 import java.io.*;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.ProviderNotFoundException;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
-import java.util.function.Consumer;
 
 
 public class LibraryUtils {

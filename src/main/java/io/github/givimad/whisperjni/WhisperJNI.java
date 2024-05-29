@@ -1,21 +1,30 @@
 package io.github.givimad.whisperjni;
 
 import io.github.givimad.whisperjni.internal.LibraryUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The {@link WhisperJNI} class allows to use whisper.cpp thought the JNI.
  *
  * @author Miguel Álvarez Díez - Initial contribution
  */
+@Slf4j
+@Component
 public class WhisperJNI {
-    // 单例模式进行加载，但是如果碰到了多线程，可能会出现加载多次的情况，采用v + s的方式
+    // 单例模式进行加载库文件，但是如果碰到了多线程，可能会出现加载多次的情况，采用v + s的方式
     private volatile static boolean libraryLoaded;
     private static LibraryLogger libraryLogger;
+
+    // 缓存模型，模型的文件路径 + 模型参数一致的模型被缓存
+    private Map<String, Integer> modelRefCache = new HashMap<>();
 
     //region native api
     private native int init(String model, WhisperContextParams params);
@@ -86,8 +95,16 @@ public class WhisperJNI {
         if(params == null) {
             params = new WhisperContextParams();
         }
+        String modelRefKey = params  + ";" + model.toAbsolutePath().toString();
+        // 如果相同的模型，直接用缓存的模型和参数就行了
+        if (modelRefCache.containsKey(modelRefKey)) {
+            log.info("使用已有模型....");
+            return new WhisperContext(this, modelRefCache.get(modelRefKey));
+        }
         int ref = init(model.toAbsolutePath().toString(), params);
-        if(ref == -1) {
+        modelRefCache.put(modelRefKey, ref);
+        log.info("使用新模型...");
+        if (ref == -1) {
             return null;
         }
         return new WhisperContext(this, ref);
@@ -375,8 +392,10 @@ public class WhisperJNI {
     public static void loadLibrary(LoadOptions options) throws IOException {
         // 防止性能问题，采用缓存方式，单例方式
         if (libraryLoaded) {
+            log.info("加载本地库中，使用原有内容...");
             return;
         }
+        log.info("加载库文件中...");
         // 锁上这个代码块
         synchronized (WhisperJNI.class) {
             // 双锁检测
@@ -391,6 +410,7 @@ public class WhisperJNI {
             }
             LibraryUtils.loadLibrary(options);
             libraryLoaded = true;
+            log.info("加载库文件成功 : {}", libraryLoaded);
         }
     }
 

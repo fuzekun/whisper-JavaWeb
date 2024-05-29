@@ -2,15 +2,15 @@ package com.fuzekun.entity;
 
 import com.fuzekun.entity.absClass.FileResolver;
 import com.fuzekun.utils.FileUtils;
+import com.fuzekun.utils.SnowflakeUtil;
 import com.fuzekun.utils.TranslateUtils;
-import com.sun.jdi.ClassNotLoadedException;
 import io.github.givimad.whisperjni.WhisperContext;
 import io.github.givimad.whisperjni.WhisperFullParams;
 import io.github.givimad.whisperjni.WhisperJNI;
 import io.github.givimad.whisperjni.WhisperSamplingStrategy;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,7 +18,6 @@ import javax.annotation.PostConstruct;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
-import javax.validation.Valid;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -38,21 +37,24 @@ import java.util.concurrent.*;
 @Component
 public class AudioFileResolver extends FileResolver<File> {
     @Value("audio.save.path")
-    private static final String SAVE_PATH = "d:\\data\\speak\\audio";
+    public static final String SAVE_PATH = "d:\\data\\speak\\audio";
     @Value("${translate.model.path}")
-    private static final String MODEL_FILE_PATH = "d:\\data\\models\\ggml-tiny.bin";
+    public static final String MODEL_FILE_PATH = "d:\\data\\models\\ggml-tiny.bin";
     @Value("${translate.language}")
-    private static final String LANGUAGE = "en";
+    public static final String LANGUAGE = "en";
     @Value("${audio.save.suffix}")
-    private static final String SUFFIX = ".wav";
+    public static final String SUFFIX = ".wav";
     @Value("{translate.ans.suffix}")
-    private static final String ANS_SUFFIX = ".txt";
+    public static final String ANS_SUFFIX = ".txt";
     @Value("{ANS_FILE_PATH}")
-    private static final String ANS_FILE_PATH = "d:\\data\\speak\\ans";
+    public static final String ANS_FILE_PATH = "d:\\data\\speak\\ans";
     @Value("{TMP_FILE_PATH}")
-    private static final String TMP_FIME_PATH = "d:\\data\\speak\\tmp";
+    public static final String TMP_FIME_PATH = "d:\\data\\speak\\tmp";
 
     private static final int CHANGE_SUCCESS_CODE = 0;
+
+    @Autowired
+    WhisperJNI whisper;
 
     // 交给spring，不用static自己写了，更加优雅。
     @PostConstruct
@@ -79,8 +81,8 @@ public class AudioFileResolver extends FileResolver<File> {
 
     @Override
     public String save(MultipartFile f) throws IOException {
-        // 1. todo: 将文件保存在本地，生成uuid
-        String fileName = SAVE_PATH + "\\" + (int)(Math.random() * 100) + SUFFIX;
+        // 1. 将文件保存在本地，生成uuid
+        String fileName = SAVE_PATH + "\\" + SnowflakeUtil.genId() + SUFFIX;
         f.transferTo(new File(fileName));
         // 2. todo: 文件表，加一个外键，用以表示用户的id
         // 3. todo: 找到用户的所有文件可以通过 id进行筛选
@@ -102,8 +104,8 @@ public class AudioFileResolver extends FileResolver<File> {
      * */
     @Override
     public Future<File> resolveAsyn(File f) throws IOException, InterruptedException, ExecutionException {
-        String tmpFile = TMP_FIME_PATH + "\\" + (int)(Math.random() * 100) + SUFFIX;
-        String ansFile = ANS_FILE_PATH + "\\" + (int)(Math.random() * 100) + ANS_SUFFIX;
+        String tmpFile = TMP_FIME_PATH + "\\" + SnowflakeUtil.genId() + SUFFIX;
+        String ansFile = ANS_FILE_PATH + "\\" + SnowflakeUtil.genId() + ANS_SUFFIX;
         Future<File>ans =  translate(f, tmpFile, ansFile);
         return ans;
     }
@@ -128,29 +130,29 @@ public class AudioFileResolver extends FileResolver<File> {
             throw new RuntimeException("源文件缺失!");
         }
 
-        // 1. 转换成64位的文件，然后在进行重新采样
+        // 1. 异步转换成64位的文件，然后在进行重新采样
         Future<float[]>task = changeAsyn(sourceFile, tmpFile);
-        log.debug("--------1. {}开始文件转换-------", sourceFile.getName());
+        log.info("--------1. {}开始文件转换-------", sourceFile.getName());
 
         // 2. 通过JNI调用C++库文件,从而实现调用本地的C++接口，使用了单例模式加载文件，所以不用担心性能问题了
         WhisperJNI.LoadOptions loadOptions = new WhisperJNI.LoadOptions();
         loadOptions.logger = System.out::println;
         WhisperJNI.loadLibrary(loadOptions);
-        WhisperJNI whisper = new WhisperJNI();
         WhisperJNI.setLibraryLogger(loadOptions.logger);
-        log.debug("-------- 2. Whisper类加载完成 ------");
+        log.info("-------- 2. Whisper库文件加载完成 ------");
 
         // 3. 进行翻译
         var ctx = whisper.init(testModelPath);
+        log.info("--------- 3. 模型加载完成 ----------- ");
         if (ctx == null) throw new RuntimeException("初始化模型失败!");
         var params = new WhisperFullParams(WhisperSamplingStrategy.GREEDY, LANGUAGE);
         float[] samples = task.get();
 
         int result = whisper.full(ctx, params, samples, samples.length);
         if(result != 0) {
-            throw new RuntimeException("Transcription failed with code " + result);
+            throw new RuntimeException("翻译失败,失败码：" + result);
         }
-        log.debug("-------- 3. 翻译完成 -----------");
+        log.info("-------- 3. 翻译完成 -----------");
         // 4. 异步写入结果，如果服务端支持推送功能，可以提升效率，否则还是串行执行
         return writeTranslateAnsToFileAsyn(whisper, ctx, ansFile);
     }
@@ -161,14 +163,15 @@ public class AudioFileResolver extends FileResolver<File> {
         // 2. 进行文件转化任务的执行
         return poolExecutor.submit(()->{
             if (TranslateUtils.change16Bit(sourceFile, tmpFilePath) != CHANGE_SUCCESS_CODE) {
-                throw new RuntimeException("转换异常，无法处理!");
+                throw new RuntimeException("转换16Bit异常，无法处理!");
             }
             Path samplePath = Path.of(tmpFilePath);
             if (!samplePath.toFile().exists())
                 throw new RuntimeException("服务器处理异常!");
             float[] samples = readJFKFileSamples(samplePath);
             // 处理完成之后，删除临时文件
-            samplePath.toFile().delete();
+            if(!samplePath.toFile().delete())
+                log.warn("临时文件删除失败!!");
             return samples;
         });
     }
@@ -178,7 +181,6 @@ public class AudioFileResolver extends FileResolver<File> {
         initThreadPool();
         // 2. 使用线程池将结果异步写入文件
         return poolExecutor.submit(() -> {
-            log.debug("-------- 4. 开始写入文件 -----------");
             File file = new File(filePath);
             BufferedWriter writer = new BufferedWriter(new FileWriter(file));
             int numSegments = whisper.fullNSegments(ctx);
@@ -202,7 +204,7 @@ public class AudioFileResolver extends FileResolver<File> {
             writer.write("-------------------------------------------------------------");
             writer.flush();
             writer.close();
-            log.debug("------------ 文件写如完成 --------------");
+            log.info("------------ 4. 文件写入完成 --------------");
             return file;
         });
     }

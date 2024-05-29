@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>文件上传</title>
+    <meta charset="UTF-8">
+    <style>
+        #drop-area {
+            width: 300px;
+            height: 200px;
+            border: 2px dashed #ccc;
+            line-height: 200px;
+            text-align: center;
+            font-size: 24px;
+            color: #999;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+<h1>文件上传</h1>
+
+<div id="drop-area">
+    将文件拖拽到此处上传
+</div>
+
+<input type="file" id="file-input" multiple>
+
+<script>
+    var dropArea = document.getElementById('drop-area');
+    var fileInput = document.getElementById('file-input');
+
+    dropArea.addEventListener('dragover', function(event) {
+        event.preventDefault();
+        dropArea.style.backgroundColor = '#e9e9e9';
+    });
+
+    dropArea.addEventListener('dragleave', function(event) {
+        event.preventDefault();
+        dropArea.style.backgroundColor = '';
+    });
+
+    dropArea.addEventListener('drop', function(event) {
+        event.preventDefault();
+        dropArea.style.backgroundColor = '';
+
+        var files = event.dataTransfer.files;
+        handleFiles(files);
+    });
+
+    fileInput.addEventListener('change', function(event) {
+        var files = event.target.files;
+        handleFiles(files);
+    });
+
+    function handleFiles(files) {
+        for (var i = 0; i < files.length; i++) {
+            var file = files[i];
+            console.log('文件名:', file.name);
+            console.log('文件大小:', file.size);
+            console.log('文件类型:', file.type);
+
+            // 创建 FormData 对象
+            var formData = new FormData();
+            // 添加文件到 FormData 对象中
+            formData.append('file', file);
+
+            // 创建 XMLHttpRequest 对象
+            var xhr = new XMLHttpRequest();
+
+            // 设置请求方法和 URL
+            xhr.open('POST', 'http://localhost:8081/translate?language=en', true);
+            // 发送 FormData 对象作为请求体
+            xhr.send(formData);
+
+            // 处理响应
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        var response = xhr.responseText;
+                        console.log('上传成功，服务器返回:', response);
+                    } else {
+                        console.log("请求失败");
+                        console.log(xhr.status);
+                        console.log(xhr);
+                    }
+                }
+            };
+        }
+    }
+</script>
+</body>
+</html>

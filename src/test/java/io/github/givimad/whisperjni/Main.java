@@ -1,9 +1,5 @@
 package io.github.givimad.whisperjni;
 
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
@@ -11,7 +7,6 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
-import java.text.ParseException;
 
 import static io.github.givimad.whisperjni.WhisperGrammar.assertValidGrammar;
 import static org.junit.jupiter.api.Assertions.assertEquals;

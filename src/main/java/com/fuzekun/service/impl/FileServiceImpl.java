@@ -96,7 +96,7 @@ public class FileServiceImpl implements FileService {
         try {
             File ansFile = resolver.resolve(file);
             // 3. 返回文件所在路径
-            ResponseResult<File> responseResult = ResponseResult.okFile("语音文件翻译成功,对应文件为：" + ansFile.getName(), ansFile).build();
+            ResponseResult responseResult = ResponseResult.ok("语音文件翻译成功,对应文件为：" + ansFile.getName()).build();
             log.info("{}语音文件翻译成功!对应结果为:{}", file.getName(), ansFile.getName());
             return responseResult;
         } catch (IOException e) {

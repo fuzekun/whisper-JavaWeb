@@ -27,7 +27,7 @@ public class TranslateUtils {
             outFile.delete();
         }
 
-        log.debug("转化中...源文件：{}， 临时文件：{}", inputFile.getAbsoluteFile(), endFile);
+        log.info("转化中...源文件：{}， 临时文件：{}", inputFile.getAbsoluteFile(), endFile);
         // 构建FFmpeg命令，注意应该是绝对路径
         String command = "ffmpeg -i " + inputFile.getAbsoluteFile() + " -ar 16000 -ac 1 -f wav " + endFile;
 
@@ -39,6 +39,7 @@ public class TranslateUtils {
 
         // 检查执行结果
         int code =  process.exitValue();
+        log.info("文件转化完成...{}", code);
 
 
         return code;

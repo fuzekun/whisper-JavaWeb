@@ -17,4 +17,11 @@ public class WhisperContextParams {
     public WhisperContextParams() {
 
     }
+
+    @Override
+    public String toString() {
+        return "WhisperContextParams{" +
+                "useGPU=" + useGPU +
+                '}';
+    }
 }

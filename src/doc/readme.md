@@ -18,3 +18,11 @@
 1. 核心就是AudioFileResovler的实现，实现了异步处理文件，加载模型，异步写入磁盘的功能。
 2. 优化了测试类，封装PostUtil类从而更方便进行测试
 3. 修复一些bug，尤其时启动时文件夹创建的bug
+
+
+# bug修复
+1. multipart上传的文件，不能直接使用输入输出流进行读写，需要直接使用transferTo进行文件保存
+2. 单例模式的whisper库文件加载失败，因为没有交给spring管理，所以
+3. 模型缓存：需要使用springboot的componetScan进行io包管理，否则无法实现单例的WhisperJNI类
+4. 修复上传文件的时候，文件名称随机生成失败的问题。采用雪花算法
+

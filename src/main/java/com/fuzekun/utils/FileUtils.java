@@ -12,6 +12,12 @@ import java.util.List;
  * @describe:
  */
 public class FileUtils {
+
+
+    public static String getRandomFileName() {
+        return SnowflakeUtil.genId() + "";
+    }
+
     // 将文件保存到filePath中
     public static boolean saveFile(File sourceFile, String filePath) throws IOException {
         // 首先创建文件夹
@@ -34,22 +40,23 @@ public class FileUtils {
         // 0. 判断
         if (f == null) throw new NullPointerException("文件为空！");
         // 1. 读取文件内容
-        List<String> fileContent = new ArrayList<>();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(f.getInputStream()));
-        String line;
-        while ((line = reader.readLine()) != null) {
-            fileContent.add(line);
-        }
-        // 2. 保存文件
-        //tmp:这里仅仅进行测试，不进行保存了. ok:完成了e
-        BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
-        for (String l : fileContent) {
-//            System.out.println(l);
-            writer.write(l);
-            writer.newLine();
-        }
-        writer.flush();
-        writer.close();
+//        List<String> fileContent = new ArrayList<>();
+//        BufferedReader reader = new BufferedReader(new InputStreamReader(f.getInputStream()));
+//        String line;
+//        while ((line = reader.readLine()) != null) {
+//            fileContent.add(line);
+//        }
+//        // 2. 保存文件
+//        //tmp:这里仅仅进行测试，不进行保存了. ok:完成了e
+//        BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
+//        for (String l : fileContent) {
+////            System.out.println(l);
+//            writer.write(l);
+//            writer.newLine();
+//        }
+//        writer.flush();
+//        writer.close();
+        f.transferTo(new File(fileName));
         return fileName;
     }
 
