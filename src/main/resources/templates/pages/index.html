@@ -25,7 +25,12 @@
 
 <input type="file" id="file-input" multiple>
 
+<div id="ansDiv" style="display: none">
+    <button id="fileDownload" onclick="downloadFile()">文件下载</button>
+</div>
 <script>
+    var downLoadURL = "http://localhost:8081/file/download?filename=";
+    var translateFileName = "1116028893787889665.txt";
     var dropArea = document.getElementById('drop-area');
     var fileInput = document.getElementById('file-input');
 
@@ -52,7 +57,42 @@
         handleFiles(files);
     });
 
+    function downloadFile() {
+        console.log("下载文件名:" + translateFileName);
+        url = downLoadURL + translateFileName;
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => response.blob())
+            .then(blob => {
+                // 创建一个临时的下载链接
+                const url = window.URL.createObjectURL(blob);
+
+                // 创建一个隐藏的<a>元素进行下载
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = translateFileName; // 设置下载的文件名
+                document.body.appendChild(a);
+
+                // 触发点击事件进行下载
+                a.click();
+
+                // 清理临时链接和<a>元素
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            })
+            .catch(error => {
+                console.error('文件下载失败:', error);
+            });
+    }
+
     function handleFiles(files) {
+        // 上传文件，隐藏下载按钮
+        document.getElementById('ansDiv').style.display = 'none';
         for (var i = 0; i < files.length; i++) {
             var file = files[i];
             console.log('文件名:', file.name);
@@ -77,11 +117,22 @@
                 if (xhr.readyState === XMLHttpRequest.DONE) {
                     if (xhr.status === 200) {
                         var response = xhr.responseText;
-                        console.log('上传成功，服务器返回:', response);
+                        var responseJSON = JSON.parse(response);
+                        console.log(response);
+                        console.log("json为" + responseJSON);
+                        console.log(responseJSON);
+                        if (responseJSON['statusCode'] === 200) {
+                            var msg = responseJSON['message'];
+                            alert(msg);
+                            // 解析成功，显示下载按钮
+                            document.getElementById("ansDiv").style.display = 'block';
+                            translateFileName = msg.split(":")[1];
+                            console.log(translateFileName);
+                        } else {
+                            alert('文件解析失败，原因' + response['msg']);
+                        }
                     } else {
-                        console.log("请求失败");
-                        console.log(xhr.status);
-                        console.log(xhr);
+                        alert('请求失败,原因' + xhr.status);
                     }
                 }
             };

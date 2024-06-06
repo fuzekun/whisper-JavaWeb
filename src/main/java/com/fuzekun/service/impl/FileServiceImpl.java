@@ -8,6 +8,7 @@ import com.fuzekun.service.FileService;
 import com.fuzekun.utils.FileUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,9 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.PostConstruct;
 import java.io.*;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author: fuzekun
@@ -96,7 +95,7 @@ public class FileServiceImpl implements FileService {
         try {
             File ansFile = resolver.resolve(file);
             // 3. 返回文件所在路径
-            ResponseResult responseResult = ResponseResult.ok("语音文件翻译成功,对应文件为：" + ansFile.getName()).build();
+            ResponseResult responseResult = ResponseResult.ok("语音文件翻译成功,对应文件为:" + ansFile.getName()).build();
             log.info("{}语音文件翻译成功!对应结果为:{}", file.getName(), ansFile.getName());
             return responseResult;
         } catch (IOException e) {
@@ -105,4 +104,15 @@ public class FileServiceImpl implements FileService {
         }
     }
 
+    @Override
+    public ResponseEntity download(String fileName) {
+        // 0. 进行判断
+        String type = FileUtils.getSuffix(fileName);
+        if (!resolverMap.containsKey(type)) {
+            log.error("{}类型的文件无法解析!", type);
+
+            return ResponseEntity.status(501).build();
+        }
+        return resolverMap.get(type).downLoad(fileName);
+    }
 }

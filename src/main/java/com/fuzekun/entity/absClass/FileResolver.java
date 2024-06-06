@@ -1,5 +1,8 @@
 package com.fuzekun.entity.absClass;
 
+import com.fuzekun.common.ResponseResult;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.sound.sampled.UnsupportedAudioFileException;
@@ -18,5 +21,6 @@ public abstract class FileResolver<T> {
     public abstract T resolve(File f) throws IOException;
     public abstract String save(MultipartFile f) throws IOException;
     public abstract Future<T> resolveAsyn(File f) throws IOException, InterruptedException, ExecutionException;
+    public abstract ResponseEntity<Resource> downLoad(String fileName);
 
 }

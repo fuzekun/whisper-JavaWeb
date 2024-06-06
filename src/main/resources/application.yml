@@ -8,6 +8,14 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    check-template-location: false
+    suffix: .html
+    encoding: UTF-8
+    content-type: text/html
+    mode: HTML
 
 translate:
   model:
@@ -26,7 +34,7 @@ tmp:
 
 txt:
   save:
-    path: d:\data\speak\txt
+    path: d:\data\speak\ans
 
 audio:
   save:
@@ -36,3 +44,4 @@ audio:
 # 文件分隔符
 File:
   split: \
+

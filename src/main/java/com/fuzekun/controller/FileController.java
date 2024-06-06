@@ -5,14 +5,12 @@ import com.fuzekun.service.FileService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.jni.File;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.InputStream;
 
 /**
  * @author: Zekun Fu
@@ -30,5 +28,13 @@ public class FileController {
     public ResponseResult upload(MultipartFile file) {
         log.debug("上传文件请求中...");
         return fileService.upload(file);
+    }
+
+    @RequestMapping(value = "/download", method = RequestMethod.GET)
+    public ResponseEntity<Resource> download(@RequestParam("filename") String fileName) {
+        log.info("文件下载请求中...");
+        ResponseEntity<Resource> ans =  fileService.download(fileName);
+        log.info("文件下载完成...");
+        return ans;
     }
 }

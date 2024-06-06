@@ -11,6 +11,8 @@ import io.github.givimad.whisperjni.WhisperSamplingStrategy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -240,5 +242,10 @@ public class AudioFileResolver extends FileResolver<File> {
             samples[i++] = Float.max(-1f, Float.min(((float) shortBuffer.get()) / (float) Short.MAX_VALUE, 1f));
         }
         return samples;
+    }
+
+    @Override
+    public ResponseEntity<Resource> downLoad(String fileName) {
+        throw new RuntimeException("功能尚未实现");
     }
 }
